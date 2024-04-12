@@ -2,7 +2,7 @@ package ams.com.ams.payload.request;
 
 public class BorrowingRecordRequest {
     private Long assetId;
-    private int quantity;
+    private Long departmentId;
 
     public Long getAssetId() {
         return assetId;
@@ -12,11 +12,11 @@ public class BorrowingRecordRequest {
         this.assetId = assetId;
     }
 
-    public int getQuantity() {
-        return quantity;
+    public Long getDepartmentId() {
+        return departmentId;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
+    public void setDepartmentId(Long departmentId) {
+        this.departmentId = departmentId;
     }
 }

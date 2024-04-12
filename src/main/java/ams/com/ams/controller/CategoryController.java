@@ -54,7 +54,7 @@ public class CategoryController {
     @PostMapping("")
     public ResponseEntity<Category> createCategory(@RequestBody Category category) {
         try {
-            logActivity("CREATE", "CATEGORY:" + category.getName(), 1);
+            logActivity("CREATE", "CATEGORY:" + category.getName());
             Category createdCategory = categoryRepository.save(category);
             return new ResponseEntity<>(createdCategory, HttpStatus.CREATED);
         } catch (Exception e) {
@@ -67,7 +67,7 @@ public class CategoryController {
     public ResponseEntity<Category> updateCategory(@PathVariable("id") Long id, @RequestBody Category category) {
         Optional<Category> categoryData = categoryRepository.findById(id);
         if (categoryData.isPresent()) {
-            logActivity("UPDATE", "CATEGORY:" + categoryData.get().getName(), 1);
+            logActivity("UPDATE", "CATEGORY:" + categoryData.get().getName());
             Category updatedCategory = categoryData.get();
             updatedCategory.setName(category.getName());
             return new ResponseEntity<>(categoryRepository.save(updatedCategory), HttpStatus.OK);
@@ -82,7 +82,7 @@ public class CategoryController {
         try {
             Optional<Category> categoryData = categoryRepository.findById(id);
             if (categoryData.isPresent()) {
-                logActivity("DELETE", "CATEGORY:" + categoryData.get().getName(), 1);
+                logActivity("DELETE", "CATEGORY:" + categoryData.get().getName());
                 assetRepository.deleteById(id);
             }
             categoryRepository.deleteById(id);
@@ -92,7 +92,7 @@ public class CategoryController {
         }
     }
 
-        private void logActivity(String content, String entity, int quantity) {
+        private void logActivity(String content, String entity) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         String name = "";
@@ -110,7 +110,6 @@ public class CategoryController {
         ActivityLog activityLog = new ActivityLog();
         activityLog.setContent(content);
         activityLog.setEntity(entity);
-        activityLog.setQuantity(quantity);
         activityLog.setTimestamp(new Date());
         activityLog.setUsername(name);
         activityLogRepository.save(activityLog);

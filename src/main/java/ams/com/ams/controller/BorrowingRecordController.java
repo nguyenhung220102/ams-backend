@@ -8,6 +8,7 @@ import ams.com.ams.payload.request.BorrowingRecordRequest;
 import ams.com.ams.repository.ActivityLogRepository;
 import ams.com.ams.repository.AssetRepository;
 import ams.com.ams.repository.BorrowingRecordRepository;
+import ams.com.ams.repository.DepartmentRepository;
 import ams.com.ams.repository.UserRepository;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
@@ -21,14 +22,11 @@ import org.springframework.security.core.Authentication;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/borrowing-records")
 @SecurityRequirement(name = "Authorization")
 public class BorrowingRecordController {
-    private static final Logger logger = LoggerFactory.getLogger(BorrowingRecordController.class);
     @Autowired
     private BorrowingRecordRepository borrowingRecordRepository;
 
@@ -37,6 +35,9 @@ public class BorrowingRecordController {
 
     @Autowired
     private ActivityLogRepository activityLogRepository;
+
+    @Autowired
+    private DepartmentRepository departmentRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -59,89 +60,55 @@ public class BorrowingRecordController {
 
     @PreAuthorize("hasAuthority('Manager') or hasAuthority('Employee')")
     @PostMapping("")
-    public ResponseEntity<BorrowingRecord> createOrUpdateBorrowingRecord(@RequestBody BorrowingRecordRequest request) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        Optional<User> user = userRepository.findByUsername(username);
-        if (!user.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<BorrowingRecord> assignAsset(@RequestBody BorrowingRecordRequest request) {
+        Optional<Department> department = departmentRepository.findById(request.getDepartmentId());
+        if (!department.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        Department department = user.get().getDepartment();
-    
         Optional<Asset> assetOptional = assetRepository.findById(request.getAssetId());
         if (!assetOptional.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         Asset asset = assetOptional.get();
-        int requestedQuantity = request.getQuantity();
-        int availableQuantity = asset.getAvailableQuantity();
-        if (availableQuantity < requestedQuantity) {
+        String status = asset.getStatus();
+
+        if (!status.equals("AVAILABLE")){
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-        Optional<BorrowingRecord> record = borrowingRecordRepository.findByDepartmentAndAsset(department, asset);
-        if (record.isPresent()) {
-            BorrowingRecord existingRecord = record.get();
-            existingRecord.setQuantity(existingRecord.getQuantity() + requestedQuantity);
-            asset.setAvailableQuantity(availableQuantity - requestedQuantity);
-            assetRepository.save(asset);
-            borrowingRecordRepository.save(existingRecord);
-            logger.info(username, "-", asset.getName(), '-', user.get().getUsername());
-            return new ResponseEntity<>(existingRecord, HttpStatus.OK);
-        } else {
-            BorrowingRecord borrowingRecord = new BorrowingRecord();
-            borrowingRecord.setQuantity(requestedQuantity);
-            borrowingRecord.setAsset(asset);
-            asset.setAvailableQuantity(availableQuantity - requestedQuantity);
-            assetRepository.save(asset);
-            borrowingRecord.setDepartment(department);
-            BorrowingRecord createdRecord = borrowingRecordRepository.save(borrowingRecord);
-            logActivity("BORROW", asset.getName(), requestedQuantity);
-            return new ResponseEntity<>(createdRecord, HttpStatus.CREATED);
-        }
+
+        BorrowingRecord record = new BorrowingRecord();
+        asset.setStatus("IN USE: " + department.get().getName());
+        assetRepository.save(asset);
+        record.setAsset(asset);
+        record.setDepartment(department.get());
+        record.setStatus("IN USE");
+        borrowingRecordRepository.save(record);
+        logActivity("ASSIGN", asset.getName());
+        return new ResponseEntity<>(record, HttpStatus.OK);
     }
     
-
-    @PreAuthorize("hasAuthority('Manager') or hasAuthority('Employee')")
-    @PutMapping("/return/{id}")
-    public ResponseEntity<BorrowingRecord> returnAsset(@PathVariable("id") Long recordId) {
-        Optional<BorrowingRecord> recordOptional = borrowingRecordRepository.findById(recordId);
-        if (recordOptional.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        BorrowingRecord borrowingRecord = recordOptional.get();
-        Asset asset = borrowingRecord.getAsset();
-        int returnedQuantity = borrowingRecord.getQuantity();
-            int currentAvailableQuantity = asset.getAvailableQuantity();
-        asset.setAvailableQuantity(currentAvailableQuantity + returnedQuantity);
-        assetRepository.save(asset);
-        logActivity("RETURN", asset.getName(), returnedQuantity);
-        borrowingRecordRepository.deleteById(recordId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    }
-
-
     @PreAuthorize("hasAuthority('Employee') or hasAuthority('Manager')")
     @PutMapping("/{id}")
-    public ResponseEntity<BorrowingRecord> updateQuantities(@PathVariable("id") Long id, @RequestParam("missingQuantity") int missingQuantity, @RequestParam("damagedQuantity") int damagedQuantity) {
+    public ResponseEntity<BorrowingRecord> updateQuantities(@PathVariable("id") Long id, @RequestParam("status") String status) {
         Optional<BorrowingRecord> borrowingRecordData = borrowingRecordRepository.findById(id);
+        if (!(status.equals("missing") || status.equals("damaged"))){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         if (borrowingRecordData.isPresent()) {
-            BorrowingRecord borrowingRecord = borrowingRecordData.get();     
-            borrowingRecord.setQuantity(borrowingRecordData.get().getQuantity() - missingQuantity - damagedQuantity);
+            BorrowingRecord borrowingRecord = borrowingRecordData.get(); 
+            borrowingRecord.setStatus(status == "damaged" ? "Damaged" : "Missing");    
             BorrowingRecord updatedBorrowingRecord = borrowingRecordRepository.save(borrowingRecord);
             Asset asset = borrowingRecord.getAsset();
-            asset.setMissingQuantity(asset.getMissingQuantity() + missingQuantity);
-            asset.setDamagedQuantity(asset.getDamagedQuantity() + damagedQuantity);
+            asset.setStatus(status.toUpperCase());
             assetRepository.save(asset);
-            if (damagedQuantity != 0){
-                logActivity("DAMAGED EQUIPMENT", asset.getName(), damagedQuantity);
-            } else logActivity("MISSING EQUIPMENT", asset.getName(), missingQuantity);
+            logActivity(status.toUpperCase() + " ASSET", asset.getName());
             return new ResponseEntity<>(updatedBorrowingRecord, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
-    private void logActivity(String content, String entity, int quantity) {
+    private void logActivity(String content, String entity) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         String name = "";
@@ -159,7 +126,6 @@ public class BorrowingRecordController {
         ActivityLog activityLog = new ActivityLog();
         activityLog.setContent(content);
         activityLog.setEntity(entity);
-        activityLog.setQuantity(quantity);
         activityLog.setTimestamp(new Date());
         activityLog.setUsername(name);
         activityLogRepository.save(activityLog);

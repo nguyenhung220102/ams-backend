@@ -11,10 +11,12 @@ import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
 
 import ams.com.ams.model.Asset;
+import ams.com.ams.model.BorrowingRecord;
 import ams.com.ams.model.Category;
 import ams.com.ams.model.Department;
 import ams.com.ams.model.User;
 import ams.com.ams.repository.AssetRepository;
+import ams.com.ams.repository.BorrowingRecordRepository;
 import ams.com.ams.repository.CategoryRepository;
 import ams.com.ams.repository.DepartmentRepository;
 import ams.com.ams.repository.UserRepository;
@@ -33,12 +35,16 @@ public class Seeder implements CommandLineRunner {
 	@Autowired
 	DepartmentRepository departmentRepository;
 
+	@Autowired
+	BorrowingRecordRepository borrowingRecordRepository;
+
 	@Override
 	public void run(String... args) throws Exception {
 		loadUserData();
 		loadCategoryData();
-		loadAssetData();
+		// loadAssetData();
 		loadDepartmentData();
+		loadBorrowingData();
 	}
 
 	private void loadUserData() {
@@ -71,12 +77,10 @@ public class Seeder implements CommandLineRunner {
 	private void loadAssetData() {
 		if (assetRepository.count() == 0) {
 			List<Category> categories = categoryRepository.findAll();
-			Random random = new Random();
 			for (Category category : categories) {
 				for (int i = 1; i <= 5; i++) {
 					String assetName = category.getName() + " " + ((char) (65 + i));
-					int quantity = random.nextInt(10) + 20;
-					Asset asset = new Asset(assetName, quantity, category);
+					Asset asset = new Asset(assetName, category);
 					assetRepository.save(asset);
 				}
 			}
@@ -101,4 +105,36 @@ public class Seeder implements CommandLineRunner {
 			}
 		}
 	}
+
+	private void loadBorrowingData() {
+    if (assetRepository.count() == 0) {
+        List<Category> categories = categoryRepository.findAll();
+        List<Department> departments = departmentRepository.findAll();
+        
+        for (Category category : categories) {
+            for (int i = 1; i <= 5; i++) {
+                String assetName = category.getName() + " " + ((char) (65 + i));
+                Asset asset = new Asset(assetName, category);
+				assetRepository.save(asset);
+                if (!asset.getStatus().equals("AVAILABLE")) {
+                    continue;
+                }
+                Random random = new Random();
+                Department randomDepartment = departments.get(random.nextInt(departments.size()));
+                BorrowingRecord borrowingRecord = new BorrowingRecord();
+                borrowingRecord.setAsset(asset);
+                borrowingRecord.setDepartment(randomDepartment);
+                borrowingRecord.setStatus("IN USE" );
+                asset.setStatus("IN USE: " + randomDepartment.getName());
+                assetRepository.save(asset);
+                borrowingRecordRepository.save(borrowingRecord);
+            }
+			for (int i = 6; i <= 10; i++) {
+                String assetName = category.getName() + " " + ((char) (65 + i));
+                Asset asset = new Asset(assetName, category);
+				assetRepository.save(asset);
+            }
+        }
+    }
+}
 }

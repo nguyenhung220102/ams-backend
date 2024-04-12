@@ -36,8 +36,18 @@ public class AssetController {
     @PreAuthorize("hasAuthority('Employee') or hasAuthority('Manager')")
     @GetMapping("")
     public ResponseEntity<List<Asset>> getAllAssets() {
-        List<Asset> assets = assetRepository.findAll();
-        return new ResponseEntity<>(assets, HttpStatus.OK);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        Optional<User> user = userRepository.findByUsername(username);
+        String role = user.get().getRole();
+        if (role == "Manager"){
+            List<Asset> assets = assetRepository.findAll();
+            return new ResponseEntity<>(assets, HttpStatus.OK);
+        } else {
+            List<Asset> assets = assetRepository.findByStatus("AVAILABLE");
+            return new ResponseEntity<>(assets, HttpStatus.OK);
+        }
+
     }
 
     @PreAuthorize("hasAuthority('Employee') or hasAuthority('Manager')")
@@ -54,10 +64,7 @@ public class AssetController {
     @PreAuthorize("hasAuthority('Manager')")
     @PostMapping("")
     public ResponseEntity<Asset> createAsset(@RequestBody Asset asset) {
-        logActivity("CREATE", asset.getName(), asset.getQuantity());
-        asset.setAvailableQuantity(asset.getQuantity());
-        asset.setDamagedQuantity(0);
-        asset.setMissingQuantity(0);
+        logActivity("CREATE", asset.getName());
         Asset createdAsset = assetRepository.save(asset);
         return new ResponseEntity<>(createdAsset, HttpStatus.CREATED);
     }
@@ -68,12 +75,8 @@ public class AssetController {
         Optional<Asset> assetData = assetRepository.findById(id);
         if (assetData.isPresent()) {
             Asset updatedAsset = assetData.get();
-            logActivity("UPDATE", asset.getName(), asset.getQuantity());
+            logActivity("UPDATE", asset.getName());
             updatedAsset.setName(asset.getName());
-            updatedAsset.setQuantity(asset.getQuantity());
-            updatedAsset.setAvailableQuantity(asset.getQuantity());
-            updatedAsset.setDamagedQuantity(asset.getDamagedQuantity());
-            updatedAsset.setDamagedQuantity(asset.getMissingQuantity());
             return new ResponseEntity<>(assetRepository.save(updatedAsset), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -86,7 +89,7 @@ public class AssetController {
         try {
             Optional<Asset> assetData = assetRepository.findById(id);
             if (assetData.isPresent()) {
-                logActivity("DELETE", assetData.get().getName(), assetData.get().getQuantity());
+                logActivity("DELETE", assetData.get().getName());
                 assetRepository.deleteById(id);
             }
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -95,7 +98,7 @@ public class AssetController {
         }
     }
 
-    private void logActivity(String content, String entity, int quantity) {
+    private void logActivity(String content, String entity) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
         String name = "";
@@ -113,7 +116,6 @@ public class AssetController {
         ActivityLog activityLog = new ActivityLog();
         activityLog.setContent(content);
         activityLog.setEntity(entity);
-        activityLog.setQuantity(quantity);
         activityLog.setTimestamp(new Date());
         activityLog.setUsername(name);
         activityLogRepository.save(activityLog);

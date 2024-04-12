@@ -17,9 +17,6 @@ public class ActivityLog {
     @Column(name = "entity")
     private String entity;
 
-    @Column(name = "quantity")
-    private int quantity;
-
     @Column(name = "timestamp")
     private Date timestamp;
 
@@ -66,14 +63,6 @@ public class ActivityLog {
 
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
     }
 
     public String getUserId() {

@@ -17,17 +17,8 @@ public class Asset {
     @Column(name = "name")
     private String name;
 
-    @Column(name = "quantity")
-    private int quantity;
-
-    @Column(name = "available_quantity")
-    private int availableQuantity;
-
-    @Column(name = "damaged_quantity")
-    private int damagedQuantity;
-
-    @Column(name = "missing_quantity")
-    private int missingQuantity;
+    @Column(name = "status")
+    private String status;
 
     @ManyToMany(mappedBy = "assets")
     @JsonBackReference
@@ -41,11 +32,9 @@ public class Asset {
     public Asset() {
     }
 
-    public Asset(String name, int quantity, Category category) {
+    public Asset(String name, Category category) {
         this.name = name;
-        this.quantity = quantity;
-        this.availableQuantity = quantity;
-        this.damagedQuantity = 0;
+        this.status = "AVAILABLE";
         this.category = category;
     }
 
@@ -65,36 +54,12 @@ public class Asset {
         this.name = name;
     }
 
-    public int getQuantity() {
-        return quantity;
+    public String getStatus() {
+        return status;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-    public int getAvailableQuantity() {
-        return availableQuantity;
-    }
-
-    public void setAvailableQuantity(int availableQuantity) {
-        this.availableQuantity = availableQuantity;
-    }
-
-    public int getDamagedQuantity() {
-        return damagedQuantity;
-    }
-
-    public void setDamagedQuantity(int damagedQuantity) {
-        this.damagedQuantity = damagedQuantity;
-    }
-
-    public int getMissingQuantity() {
-        return missingQuantity;
-    }
-
-    public void setMissingQuantity(int missingQuantity) {
-        this.missingQuantity = missingQuantity;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public List<Department> getDepartments() {

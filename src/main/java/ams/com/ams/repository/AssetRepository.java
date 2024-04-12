@@ -10,5 +10,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AssetRepository extends JpaRepository<Asset, Long> {
       List<Asset> findByCategoryId(Long category_id);
-
+      List<Asset> findByStatus(String status);
 }

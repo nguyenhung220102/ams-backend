@@ -19,8 +19,8 @@ public class BorrowingRecord {
     @JoinColumn(name = "department_id")
     private Department department;
 
-    @Column(name = "quantity")
-    private int quantity;
+    @Column(name = "status")
+    private String status;
 
     public BorrowingRecord() {
     }
@@ -49,12 +49,12 @@ public class BorrowingRecord {
         this.department = department;
     }
 
-    public int getQuantity() {
-        return quantity;
+    public String getStatus() {
+        return status;
     }
 
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
+    public void setStatus(String status) {
+        this.status = status;
     }
 
 }
