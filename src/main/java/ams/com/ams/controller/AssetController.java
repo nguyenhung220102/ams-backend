@@ -6,6 +6,7 @@ import ams.com.ams.model.User;
 import ams.com.ams.repository.ActivityLogRepository;
 import ams.com.ams.repository.AssetRepository;
 import ams.com.ams.repository.UserRepository;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/assets")
+@SecurityRequirement(name = "Authorization")
 public class AssetController {
 
     @Autowired
@@ -55,6 +57,7 @@ public class AssetController {
         logActivity("CREATE", asset.getName(), asset.getQuantity());
         asset.setAvailableQuantity(asset.getQuantity());
         asset.setDamagedQuantity(0);
+        asset.setMissingQuantity(0);
         Asset createdAsset = assetRepository.save(asset);
         return new ResponseEntity<>(createdAsset, HttpStatus.CREATED);
     }
@@ -69,7 +72,8 @@ public class AssetController {
             updatedAsset.setName(asset.getName());
             updatedAsset.setQuantity(asset.getQuantity());
             updatedAsset.setAvailableQuantity(asset.getQuantity());
-            updatedAsset.setDamagedQuantity(0);
+            updatedAsset.setDamagedQuantity(asset.getDamagedQuantity());
+            updatedAsset.setDamagedQuantity(asset.getMissingQuantity());
             return new ResponseEntity<>(assetRepository.save(updatedAsset), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -102,7 +106,7 @@ public class AssetController {
                 name = username;
             } else {
                 if (user.get().getDepartment() != null) {
-                    name = user.get().getDepartment().getName();
+                    name = user.get().getDepartment().getName() + ":" + user.get().getUsername();
                 }
             }
         }

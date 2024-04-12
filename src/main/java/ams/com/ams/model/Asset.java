@@ -1,7 +1,10 @@
 package ams.com.ams.model;
 
 import jakarta.persistence.*;
-import java.util.Set;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "assets")
@@ -23,8 +26,13 @@ public class Asset {
     @Column(name = "damaged_quantity")
     private int damagedQuantity;
 
+    @Column(name = "missing_quantity")
+    private int missingQuantity;
+
     @ManyToMany(mappedBy = "assets")
-    private Set<Department> departments;
+    @JsonBackReference
+    @JsonIgnoreProperties("departments")
+    private List<Department> departments;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -81,11 +89,19 @@ public class Asset {
         this.damagedQuantity = damagedQuantity;
     }
 
-    public Set<Department> getDepartments() {
+    public int getMissingQuantity() {
+        return missingQuantity;
+    }
+
+    public void setMissingQuantity(int missingQuantity) {
+        this.missingQuantity = missingQuantity;
+    }
+
+    public List<Department> getDepartments() {
         return departments;
     }
 
-    public void setDepartments(Set<Department> departments) {
+    public void setDepartments(List<Department> departments) {
         this.departments = departments;
     }
 

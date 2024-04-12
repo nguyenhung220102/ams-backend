@@ -3,6 +3,7 @@ package ams.com.ams.model;
 import jakarta.persistence.*;
 
 @Entity
+
 @Table(name = "users", 
     uniqueConstraints = { 
       @UniqueConstraint(columnNames = "username"),
@@ -18,7 +19,8 @@ public class User {
 
   private String role;
 
-  @OneToOne(mappedBy = "manager")
+  @ManyToOne
+  @JoinColumn(name = "department_id")
   private Department department;
 
   public User() {

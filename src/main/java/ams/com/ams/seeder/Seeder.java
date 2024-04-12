@@ -2,6 +2,7 @@ package ams.com.ams.seeder;
 
 import java.util.List;
 import java.util.Random;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,6 @@ public class Seeder implements CommandLineRunner {
 				userRepository.save(employee);
 			}
 		}
-		System.out.println(userRepository.count());
 	}
 
 	private void loadCategoryData() {
@@ -66,7 +66,6 @@ public class Seeder implements CommandLineRunner {
 				categoryRepository.save(category);
 			}
 		}
-		System.out.println(categoryRepository.count());
 	}
 
 	private void loadAssetData() {
@@ -82,7 +81,6 @@ public class Seeder implements CommandLineRunner {
 				}
 			}
 		}
-		System.out.println(assetRepository.count());
 	}
 
 	private void loadDepartmentData() {
@@ -91,13 +89,16 @@ public class Seeder implements CommandLineRunner {
 
 			char departmentName = 'A';
 			for (User employee : employees) {
-				Department department = new Department();
-				department.setName("Department " + departmentName);
-				department.setManager(employee);
-				departmentRepository.save(department);
-				departmentName++;
+            Department department = new Department();
+            department.setName("Department " + departmentName);
+            List<User> users = new ArrayList<>();
+            users.add(employee);
+			employee.setDepartment(department);
+            department.setUsers(users);
+            departmentRepository.save(department);
+			userRepository.save(employee);
+            departmentName++;
 			}
 		}
-		System.out.println(departmentRepository.count());
 	}
 }

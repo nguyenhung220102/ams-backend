@@ -3,6 +3,7 @@ package ams.com.ams.model;
 import jakarta.persistence.*;
 
 @Entity
+
 @Table(name = "borrowing_records")
 public class BorrowingRecord {
 

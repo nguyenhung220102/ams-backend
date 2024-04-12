@@ -8,6 +8,7 @@ import ams.com.ams.repository.ActivityLogRepository;
 import ams.com.ams.repository.AssetRepository;
 import ams.com.ams.repository.CategoryRepository;
 import ams.com.ams.repository.UserRepository;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/categories")
+@SecurityRequirement(name = "Authorization")
 public class CategoryController {
 
     @Autowired
