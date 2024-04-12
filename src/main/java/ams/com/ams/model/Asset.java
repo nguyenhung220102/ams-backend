@@ -1,10 +1,6 @@
 package ams.com.ams.model;
 
 import jakarta.persistence.*;
-import java.util.List;
-
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "assets")
@@ -20,14 +16,13 @@ public class Asset {
     @Column(name = "status")
     private String status;
 
-    @ManyToMany(mappedBy = "assets")
-    @JsonBackReference
-    @JsonIgnoreProperties("departments")
-    private List<Department> departments;
-
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @ManyToOne
+    @JoinColumn(name = "department_id", nullable = true)
+    private Department department;
 
     public Asset() {
     }
@@ -36,6 +31,7 @@ public class Asset {
         this.name = name;
         this.status = "AVAILABLE";
         this.category = category;
+        this.department = null;
     }
 
     public Long getId() {
@@ -62,12 +58,12 @@ public class Asset {
         this.status = status;
     }
 
-    public List<Department> getDepartments() {
-        return departments;
+    public Department getDepartment() {
+        return department;
     }
 
-    public void setDepartments(List<Department> departments) {
-        this.departments = departments;
+    public void setDepartment(Department department) {
+        this.department = department;
     }
 
     public Category getCategory(){

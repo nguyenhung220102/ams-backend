@@ -5,8 +5,6 @@ import jakarta.persistence.*;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 
@@ -24,15 +22,8 @@ public class Department {
     @JsonIgnore
     private List<User> users;
 
-    @ManyToMany
-    @JoinTable(
-            name = "borrowing_records",
-            joinColumns = @JoinColumn(name = "department_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "asset_id", referencedColumnName = "id")
-    )
-    @JsonManagedReference
+    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    @JsonIgnoreProperties("assets")
     private List<Asset> assets;
 
     public Department() {}
